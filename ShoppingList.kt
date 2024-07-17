@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -43,11 +44,11 @@ data class ShoppingItem(val id : Int, var name : String, var quantity : Int, var
 
 @Composable
 fun ShoppingListApp(){
-    var listOfItems by remember { mutableStateOf(listOf<ShoppingItem>())}
+    var listOfItems by remember { mutableStateOf(listOf<ShoppingItem>())} 
     var showAddWindow : Boolean by remember { mutableStateOf(false) }
     var itemName : String by remember { mutableStateOf("") }
     var itemQuantity : String by remember { mutableStateOf("1") }
-    val context = LocalContext.current  //for Toast functionality
+    val context = LocalContext.current  //for the Toast functionality
 
     Column (
         modifier = Modifier.fillMaxSize(),
@@ -73,7 +74,24 @@ fun ShoppingListApp(){
                 .padding(32.dp)
         ){
             items(listOfItems){
-                ShoppingListItem(it, {}, {})
+                item ->
+                if (item.isEditing){
+                    ShoppingListItemEditor(item = item, onEditComplete = {
+                        editedName, editedQuantity ->
+                        listOfItems = listOfItems.map{ it.copy( isEditing = false )}
+                        val editedItem = listOfItems.find { it.id == item.id }  //comparing item id with id of item we're currently editing
+                        editedItem?.let {   //code will be executed, when the value of editedItem isn't Null
+                            it.name = editedName
+                            it.quantity = editedQuantity
+                        }
+                    })
+                }else{
+                    ShoppingListItem(
+                        item = item,
+                        onEditClick = { listOfItems = listOfItems.map { it.copy(isEditing = it.id == item.id) } },
+                        onDeleteClick = { listOfItems = listOfItems-item}
+                    )
+                }
             }
         }
     }
@@ -133,7 +151,7 @@ fun ShoppingListApp(){
                             val newItem = ShoppingItem(
                                 id = listOfItems.size + 1,
                                 name = itemName,
-                                quantity = itemQuantity.toInt()
+                                quantity = itemQuantity.toInt() //it is string, because of OutlinedTextField function, so we have to convert it back to int
                             )
                             listOfItems = listOfItems + newItem
                             showAddWindow = false
@@ -168,9 +186,13 @@ fun ShoppingListItemEditor(
     Row (
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
+            .background(
+                Color(0xFFB9C9F1),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(16.dp, 8.dp, 24.dp, 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ){
         Column (
             modifier = Modifier
@@ -183,6 +205,11 @@ fun ShoppingListItemEditor(
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(8.dp)
+                    .height(32.dp)
+                    .border(
+                        border = BorderStroke(2.dp, Color(0xFF495D91)),
+                        shape = RoundedCornerShape(20)
+                    ),
             )
             BasicTextField(
                 value = editedQuantity,
@@ -191,6 +218,11 @@ fun ShoppingListItemEditor(
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(8.dp)
+                    .height(32.dp)
+                    .border(
+                        border = BorderStroke(2.dp, Color(0xFF495D91)),
+                        shape = RoundedCornerShape(20)
+                    ),
             )
         }
         Button(
@@ -207,7 +239,7 @@ fun ShoppingListItemEditor(
 @Composable
 fun ShoppingListItem(
     item : ShoppingItem,
-    onEditClick : () -> Unit,   //no input or output === () and UNIT
+    onEditClick : () -> Unit,
     onDeleteClick : () -> Unit
 ){
     Row (
@@ -235,14 +267,14 @@ fun ShoppingListItem(
             modifier = Modifier
                 .padding(8.dp)
         ){
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = { onEditClick() }) {
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Edit Symbol",
                     tint = Color.Black
                 )
             }
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = { onDeleteClick() }) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete Symbol",
