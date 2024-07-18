@@ -44,11 +44,11 @@ data class ShoppingItem(val id : Int, var name : String, var quantity : Int, var
 
 @Composable
 fun ShoppingListApp(){
-    var listOfItems by remember { mutableStateOf(listOf<ShoppingItem>())} 
+    var listOfItems by remember { mutableStateOf(listOf<ShoppingItem>())}
     var showAddWindow : Boolean by remember { mutableStateOf(false) }
     var itemName : String by remember { mutableStateOf("") }
     var itemQuantity : String by remember { mutableStateOf("1") }
-    val context = LocalContext.current  //for the Toast functionality
+    val context = LocalContext.current  //for Toast functionality
 
     Column (
         modifier = Modifier.fillMaxSize(),
@@ -74,13 +74,13 @@ fun ShoppingListApp(){
                 .padding(32.dp)
         ){
             items(listOfItems){
-                item ->
+                item -> 
                 if (item.isEditing){
                     ShoppingListItemEditor(item = item, onEditComplete = {
                         editedName, editedQuantity ->
                         listOfItems = listOfItems.map{ it.copy( isEditing = false )}
                         val editedItem = listOfItems.find { it.id == item.id }  //comparing item id with id of item we're currently editing
-                        editedItem?.let {   //code will be executed, when the value of editedItem isn't Null
+                        editedItem?.let {
                             it.name = editedName
                             it.quantity = editedQuantity
                         }
@@ -88,7 +88,7 @@ fun ShoppingListApp(){
                 }else{
                     ShoppingListItem(
                         item = item,
-                        onEditClick = { listOfItems = listOfItems.map { it.copy(isEditing = it.id == item.id) } },
+                        onEditClick = { listOfItems = listOfItems.map { it.copy(isEditing = it.id == item.id) } },  //if items are the same (it.id == item.id) isEditing is = to true
                         onDeleteClick = { listOfItems = listOfItems-item}
                     )
                 }
@@ -151,7 +151,7 @@ fun ShoppingListApp(){
                             val newItem = ShoppingItem(
                                 id = listOfItems.size + 1,
                                 name = itemName,
-                                quantity = itemQuantity.toInt() //it is string, because of OutlinedTextField function, so we have to convert it back to int
+                                quantity = itemQuantity.toInt() //is a string, because of OutlinedTextField function, so we have to convert it back to int
                             )
                             listOfItems = listOfItems + newItem
                             showAddWindow = false
@@ -182,6 +182,7 @@ fun ShoppingListItemEditor(
     var editedName by remember { mutableStateOf(item.name) }
     var editedQuantity by remember { mutableStateOf(item.quantity.toString()) }
     var isEditing by remember { mutableStateOf(item.isEditing) }
+    val context = LocalContext.current
 
     Row (
         modifier = Modifier
@@ -215,6 +216,7 @@ fun ShoppingListItemEditor(
                 value = editedQuantity,
                 onValueChange = {editedQuantity = it},
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(8.dp)
@@ -229,6 +231,7 @@ fun ShoppingListItemEditor(
             onClick = {
                 isEditing = false
                 onEditComplete(editedName, editedQuantity.toIntOrNull() ?: 1)
+                Toast.makeText(context, "Item has been edited!", Toast.LENGTH_SHORT).show()
             }
         ) {
             Text(text = "Save")
@@ -242,6 +245,8 @@ fun ShoppingListItem(
     onEditClick : () -> Unit,
     onDeleteClick : () -> Unit
 ){
+    val context = LocalContext.current
+
     Row (
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -274,7 +279,10 @@ fun ShoppingListItem(
                     tint = Color.Black
                 )
             }
-            IconButton(onClick = { onDeleteClick() }) {
+            IconButton(onClick = {
+                onDeleteClick()
+                Toast.makeText(context, "Item has been deleted!", Toast.LENGTH_SHORT).show()
+            }) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete Symbol",
